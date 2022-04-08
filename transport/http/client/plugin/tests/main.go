@@ -17,7 +17,7 @@ type registerer string
 
 var logger Logger = nil
 
-func (r registerer) RegisterLogger(v interface{}) {
+func (registerer) RegisterLogger(v interface{}) {
 	l, ok := v.(Logger)
 	if !ok {
 		return
@@ -33,7 +33,7 @@ func (r registerer) RegisterClients(f func(
 	f(string(r), r.registerClients)
 }
 
-func (r registerer) registerClients(ctx context.Context, extra map[string]interface{}) (http.Handler, error) {
+func (r registerer) registerClients(_ context.Context, extra map[string]interface{}) (http.Handler, error) {
 	// check the passed configuration and initialize the plugin
 	name, ok := extra["name"].(string)
 	if !ok {

@@ -1,3 +1,4 @@
+//go:build !race
 // +build !race
 
 // SPDX-License-Identifier: Apache-2.0
@@ -270,7 +271,7 @@ func TestRunServer_ko(t *testing.T) {
 	serviceCfg := config.ServiceConfig{}
 	r.Run(serviceCfg)
 	re := regexp.MustCompile(errorMsg)
-	if !re.MatchString(string(buff.Bytes())) {
+	if !re.MatchString(buff.String()) {
 		t.Errorf("the logger doesn't contain the expected msg: %s", buff.Bytes())
 	}
 }
@@ -330,6 +331,6 @@ func (e erroredProxyFactory) New(_ *config.EndpointConfig) (proxy.Proxy, error) 
 
 type identityMiddleware struct{}
 
-func (i identityMiddleware) Handler(h http.Handler) http.Handler {
+func (identityMiddleware) Handler(h http.Handler) http.Handler {
 	return h
 }

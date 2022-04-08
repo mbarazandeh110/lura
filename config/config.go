@@ -283,8 +283,7 @@ type ExtraConfig map[string]interface{}
 
 func (e *ExtraConfig) sanitize() {
 	for module, extra := range *e {
-		switch extra := extra.(type) {
-		case map[interface{}]interface{}:
+		if extra, ok := extra.(map[interface{}]interface{}); ok {
 			sanitized := map[string]interface{}{}
 			for k, v := range extra {
 				sanitized[fmt.Sprintf("%v", k)] = v
@@ -305,8 +304,6 @@ func (e *ExtraConfig) Normalize() {
 
 // ExtraConfigAlias is the set of alias to accept as namespace
 var ExtraConfigAlias = map[string]string{}
-
-const defaultNamespace = "github.com/devopsfaith/krakend/config"
 
 var (
 	simpleURLKeysPattern    = regexp.MustCompile(`\{([\w\-\.:/]+)\}`)
@@ -456,7 +453,7 @@ func (s *ServiceConfig) paramExtractionPattern() *regexp.Regexp {
 	return endpointURLKeysPattern
 }
 
-func (s *ServiceConfig) extractPlaceHoldersFromURLTemplate(subject string, pattern *regexp.Regexp) []string {
+func (*ServiceConfig) extractPlaceHoldersFromURLTemplate(subject string, pattern *regexp.Regexp) []string {
 	matches := pattern.FindAllStringSubmatch(subject, -1)
 	keys := make([]string, len(matches))
 	for k, v := range matches {
@@ -512,6 +509,9 @@ func (s *ServiceConfig) initBackendDefaults(e, b int) {
 	if backend.Method == "" {
 		backend.Method = endpoint.Method
 	}
+	if endpoint.OutputEncoding == encoding.NOOP {
+		backend.Encoding = encoding.NOOP
+	}
 	backend.Timeout = endpoint.Timeout
 	backend.ConcurrentCalls = endpoint.ConcurrentCalls
 	backend.Decoder = encoding.GetRegister().Get(strings.ToLower(backend.Encoding))(backend.IsCollection)
@@ -551,7 +551,7 @@ func (s *ServiceConfig) initBackendURLMappings(e, b int, inputParams map[string]
 			}
 		}
 		key := strings.Title(output[:1]) + output[1:]
-		backend.URLPattern = strings.Replace(backend.URLPattern, "{"+output+"}", "{{."+key+"}}", -1)
+		backend.URLPattern = strings.ReplaceAll(backend.URLPattern, "{"+output+"}", "{{."+key+"}}")
 		backend.URLKeys = append(backend.URLKeys, key)
 	}
 	return nil
