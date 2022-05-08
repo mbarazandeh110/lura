@@ -120,13 +120,7 @@ func testKrakenD(t *testing.T, runRouter func(logging.Logger, *config.ServiceCon
 		return
 	}
 
-	buf := new(bytes.Buffer)
-	logger, err := logging.NewLogger("DEBUG", buf, "[KRAKEND]")
-	if err != nil {
-		t.Error(err)
-		return
-	}
-
+	logger := logging.NoOp
 	go runRouter(logger, cfg)
 
 	<-time.After(300 * time.Millisecond)
@@ -473,7 +467,7 @@ func setupBackend(t *testing.T) (*config.ServiceConfig, error) {
 
 	// crasher backend
 	b4 := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		http.Error(rw, "sad panda", 429)
+		http.Error(rw, "sad panda", http.StatusTooManyRequests)
 	}))
 	data["b4"] = b4.URL
 

@@ -189,10 +189,8 @@ func executeResponseModifiers(respModifiers []func(interface{}) (interface{}, er
 	r.IsComplete = tmp.IsComplete()
 	r.Io = tmp.Io()
 	r.Metadata = Metadata{}
-	if m := tmp.Metadata(); m != nil {
-		r.Metadata.Headers = m.Headers()
-		r.Metadata.StatusCode = m.StatusCode()
-	}
+	r.Metadata.Headers = tmp.Headers()
+	r.Metadata.StatusCode = tmp.StatusCode()
 	return r, nil
 }
 
@@ -208,6 +206,7 @@ type RequestWrapper interface {
 }
 
 // ResponseWrapper is an interface for passing proxy response metadata between the lura pipe and the loaded plugins
+// Deprecated: use the methods available at the ResponseWrapper interface
 type ResponseMetadataWrapper interface {
 	Headers() map[string][]string
 	StatusCode() int
@@ -218,7 +217,10 @@ type ResponseWrapper interface {
 	Data() map[string]interface{}
 	Io() io.Reader
 	IsComplete() bool
+	// Deprecated: use Headers and StatusCode instead
 	Metadata() ResponseMetadataWrapper
+	Headers() map[string][]string
+	StatusCode() int
 }
 
 type requestWrapper struct {
@@ -254,7 +256,9 @@ type responseWrapper struct {
 	io         io.Reader
 }
 
-func (r responseWrapper) Data() map[string]interface{}      { return r.data }
-func (r responseWrapper) IsComplete() bool                  { return r.isComplete }
-func (r responseWrapper) Metadata() ResponseMetadataWrapper { return r.metadata }
-func (r responseWrapper) Io() io.Reader                     { return r.io }
+func (r responseWrapper) Data() map[string]interface{}    { return r.data }
+func (r responseWrapper) IsComplete() bool                { return r.isComplete }
+func (responseWrapper) Metadata() ResponseMetadataWrapper { return nil }
+func (r responseWrapper) Io() io.Reader                   { return r.io }
+func (r responseWrapper) Headers() map[string][]string    { return r.metadata.headers }
+func (r responseWrapper) StatusCode() int                 { return r.metadata.statusCode }
